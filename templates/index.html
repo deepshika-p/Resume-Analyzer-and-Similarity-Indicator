@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Resume Analyzer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" id="theme-style">
+  <style>
+    body.dark-mode {
+      background-color: #1a1a1a;
+      color: #ffffff;
+    }
+  </style>
+  <script>
+    function toggleDarkMode() {
+      const body = document.body;
+      const themeStyleLink = document.getElementById('theme-style');
+
+      themeStyleLink.addEventListener('transitionend', () => {
+        themeStyleLink.removeEventListener('transitionend', arguments.callee);
+        themeStyleLink.href = body.classList.contains('dark-mode')
+          ? "{{ url_for('static', filename='styles.css') }}"
+          : "{{ url_for('static', filename='dark-theme.css') }}";
+      });
+
+      body.classList.toggle('dark-mode');
+    }
+  </script>
+  <script src="/static/recorder.js"></script>
+  <script src="/static/audiodisplay.js"></script>
+  <script src="/static/main.js"></script>
+  <script src="/static/recorderWorker.js"></script>
+</head>
+
+<body>
+
+  <h1 class="main">Resume Analyzer</h1>
+
+  <label id="dark-mode-toggle-label" for="dark-mode-toggle">
+    <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()">
+    <div id="dark-mode-toggle-slider" ></div>
+  </label>
+  <br><br>
+  <h1>Analyze Resume</h1><br>
+  <form action="/compare_resume" method="post" enctype="multipart/form-data">
+    <label for="job_description">Job Description</label>
+    <textarea name="job_description" class="job" rows="4" cols="50" required></textarea>
+    <p>
+      <button id="start" class="btn btn-success" onclick="startRecording()" disabled>Start</button>
+      <button id="stop" class="btn btn-danger" onclick="stopRecording()" disabled>Stop</button>
+    </p>
+    <br>
+    <label for="resume_file">Upload Resume (PDF)</label>
+    <input type="file" name="resume_file" accept=".pdf" required>
+    <br>
+    <input type="submit" value="Analyze Resume">
+  </form>
+  <br>
+
+  {% if results1 and results1[0] %}  <h3>Resume Analysis</h3>
+  <ul>
+    <li>Similarity: {{ results1[0][2] }}%</li>
+    {% if results1[0][3] %}  <li>Missing Skills:</li>
+      <ul>
+        {% for skill in results1[0][3] %}
+          <li>{{ skill }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </ul>
+{% endif %}
+
+<br><br>
+<br>
+  <h1>Rank Resumes</h1><br>
+  <form action="/" method="post" enctype="multipart/form-data">
+    <label for="job_description">Job Description</label>
+    <textarea name="job_description" class="job"rows="4" cols="50" required></textarea>
+    
+    <br>
+    <label for="resume_files">Upload Resumes (PDF)</label>
+    <input type="file" name="resume_files" accept=".pdf" multiple required>
+    <br>
+    <input type="submit" value="Rank Resumes">
+  </form>
+  <br>
+
+  {% if results2 %} <h3>Ranked Resumes</h3>
+  <table>
+    <tr>
+        <th>Rank</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Similarity in %</th>
+        <th>Missing Skills</th>
+    </tr>
+    {% for result in results2 %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ result[0][0] }}</td>
+        <td>{{ result[1][0] }}</td>
+        <td>{{ result[2] }}</td>
+        <td>{{ ', '.join(result[3]) }}</td> 
+    </tr>
+    {% endfor %}
+  </table>
+  {% if results2 %}
+  <br>
+  <a href="{{ url_for('download_csv', results=[results2]) }}" style="
+    background-color: #b0b1b2;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 25px;
+    cursor: pointer;
+    text-decoration: none;">Download CSV</a>
+
+
+  {% endif %}
+
+  {% endif %}
+</body>
+
+</html>
